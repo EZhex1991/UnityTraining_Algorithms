@@ -71,7 +71,7 @@ public class AStar : MonoBehaviour
         }
         public override int GetHashCode()
         {
-            return x * 100000 + y;
+            return x * 1000 + y;
         }
     }
     public class Status
@@ -95,16 +95,17 @@ public class AStar : MonoBehaviour
     private Image[,] images;
 
     List<Point> openList = new List<Point>();
-    List<Point> closedList = new List<Point>();
+    bool[,] closedList;
     Dictionary<Point, Status> record = new Dictionary<Point, Status>();
 
     void Start()
     {
-        float cellSizeX = 1000 / size.x - 1;
-        float cellSizeY = 1000 / size.y - 1;
+        float cellSizeX = 1000f / size.x - 1;
+        float cellSizeY = 1000f / size.y - 1;
         GetComponent<GridLayoutGroup>().cellSize = new Vector2(cellSizeX, cellSizeY);
         toggles = new Toggle[size.x, size.y];
         images = new Image[size.x, size.y];
+        closedList = new bool[size.x, size.y];
         Point.allowObliqueMove = allowObliqueMove;
         for (int x = 0; x < size.x; x++)
         {
@@ -161,7 +162,7 @@ public class AStar : MonoBehaviour
     void Reset()
     {
         openList.Clear();
-        closedList.Clear();
+        closedList = new bool[size.x, size.y];
         record.Clear();
         openList.Add(startPoint);
         record.Add(startPoint, new Status(null, 0));
@@ -179,7 +180,7 @@ public class AStar : MonoBehaviour
                 break;
             }
             openList.Remove(parent);
-            closedList.Add(parent);
+            closedList[parent.x, parent.y] = true;
             foreach (Point child in parent.GetChildren())
             {
                 if (!IsValid(child))
@@ -207,12 +208,12 @@ public class AStar : MonoBehaviour
 
     void Refresh()
     {
-        for (int x = 0; x < 50; x++)
+        for (int x = 0; x < size.x; x++)
         {
-            for (int y = 0; y < 50; y++)
+            for (int y = 0; y < size.y; y++)
             {
                 Point point = new Point(x, y);
-                if (closedList.Contains(point))
+                if (closedList[point.x, point.y])
                 {
                     images[x, y].color = Color.red;
                 }
