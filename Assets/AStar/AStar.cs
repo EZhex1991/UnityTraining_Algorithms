@@ -10,6 +10,7 @@ using UnityEngine.UI;
 
 public class AStar : MonoBehaviour
 {
+    [System.Serializable]
     public class Point
     {
         public static bool allowObliqueMove;
@@ -70,7 +71,7 @@ public class AStar : MonoBehaviour
         }
         public override int GetHashCode()
         {
-            return x * 1000 + y;
+            return x * 100000 + y;
         }
     }
     public class Status
@@ -84,28 +85,30 @@ public class AStar : MonoBehaviour
         }
     }
 
-    public Vector2 start;
-    public Vector2 end;
+    public Point size = new Point(50, 50);
+    public Point startPoint = new Point(5, 5);
+    public Point endPoint = new Point(45, 45);
     public bool allowObliqueMove;
 
     public GameObject prefab;
-    private Toggle[,] toggles = new Toggle[50, 50];
-    private Image[,] images = new Image[50, 50];
+    private Toggle[,] toggles;
+    private Image[,] images;
 
-    Point startPoint;
-    Point endPoint;
     List<Point> openList = new List<Point>();
     List<Point> closedList = new List<Point>();
     Dictionary<Point, Status> record = new Dictionary<Point, Status>();
 
     void Start()
     {
+        float cellSizeX = 1000 / size.x - 1;
+        float cellSizeY = 1000 / size.y - 1;
+        GetComponent<GridLayoutGroup>().cellSize = new Vector2(cellSizeX, cellSizeY);
+        toggles = new Toggle[size.x, size.y];
+        images = new Image[size.x, size.y];
         Point.allowObliqueMove = allowObliqueMove;
-        startPoint = new Point((int)start.x, (int)start.y);
-        endPoint = new Point((int)end.x, (int)end.y);
-        for (int x = 0; x < 50; x++)
+        for (int x = 0; x < size.x; x++)
         {
-            for (int y = 0; y < 50; y++)
+            for (int y = 0; y < size.y; y++)
             {
                 GameObject element = Instantiate(prefab);
                 element.transform.SetParent(transform, false);
@@ -117,7 +120,6 @@ public class AStar : MonoBehaviour
         }
         toggles[startPoint.x, startPoint.y].isOn = false;
         toggles[endPoint.x, endPoint.y].isOn = false;
-        Search();
     }
 
     float GetDistance(Point point)
@@ -151,7 +153,7 @@ public class AStar : MonoBehaviour
 
     bool IsValid(Point point)
     {
-        if (point.x >= 50 || point.y >= 50 || point.x < 0 || point.y < 0)
+        if (point.x >= size.x || point.y >= size.y || point.x < 0 || point.y < 0)
             return false;
         return !toggles[point.x, point.y].isOn;
     }
@@ -168,6 +170,7 @@ public class AStar : MonoBehaviour
     {
         Point.allowObliqueMove = allowObliqueMove;
         Reset();
+        float startTime = Time.realtimeSinceStartup;
         while (openList.Count > 0)
         {
             Point parent = openList[0];
@@ -197,6 +200,8 @@ public class AStar : MonoBehaviour
             }
             openList.Sort(Sort);
         }
+        float endTime = Time.realtimeSinceStartup;
+        print("time cost: " + (endTime - startTime));
         Refresh();
     }
 
